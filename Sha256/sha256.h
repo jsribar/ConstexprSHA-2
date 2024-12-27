@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstdint>
@@ -23,6 +24,7 @@ constexpr uint8_t to_uint<uint8_t>(const uint8_t* input)
     return *input;
 }
 
+
 template <typename T>
 constexpr void to_uint8_array(T value, uint8_t* dest)
 {
@@ -39,6 +41,7 @@ constexpr void to_uint8_array<uint8_t>(uint8_t value, uint8_t* dest)
 {
     *dest = value;
 }
+
 
 template <typename T>
 constexpr T right_rotate(const T input, size_t n)
@@ -70,13 +73,23 @@ public:
     }
 
     constexpr explicit sha256_t(const uint8_t* input, size_t length)
-        : message_length_m(length)
-        , message_left_m(length)
+        : message_begin_m(input)
+        , message_end_m(input + length)
+        , message_length_m(length)
     {
-        update(input);
-        pad_last_block(length);
-        extend_message_schedule();
-        compress();
+        do
+        {
+            const auto copied = copy_message_block();
+            message_begin_m += copied;
+            if (copied < message_block_bytes_k)
+            {
+                pad_last_block(copied);
+            }
+            extend_message_schedule();
+            compress();
+        } while (message_begin_m != message_end_m || padding_m != padding_t::size);
+
+        final_hash();
     }
 
     constexpr message_schedule_t data() const
@@ -90,11 +103,24 @@ public:
     }
 
 private:
-    size_t message_length_m{ 0 };
-    size_t message_left_m{ 0 };
+    const uint8_t* message_begin_m{ nullptr };
+    const uint8_t* message_end_m{ nullptr };
+
+    const size_t message_length_m{ 0 };
 
     message_schedule_t message_schedule_m{ 0 };
     message_digest_t message_digest_m{ 0 };
+
+    std::array<uint32_t, 8> h_m{ h_k };
+
+    enum class padding_t
+    {
+        none,
+        one_bit,
+        size,
+    };
+
+    padding_t padding_m{ padding_t::none };
 
     static constexpr uint8_t padding_one_k{ 0x80 };
     static constexpr size_t last_block_size_k{ message_block_bytes_k - 8 };
@@ -115,27 +141,34 @@ private:
     };
 
 
-    constexpr void update(const uint8_t* input)
+    constexpr size_t copy_message_block()
     {
-        const auto to_copy = message_length_m > message_block_bytes_k ? message_length_m % message_block_bytes_k : message_length_m;
-        std::copy(input, input + to_copy, message_schedule_m.data());
-        message_left_m -= to_copy;
+        const auto to_copy = std::min(size_t(message_end_m - message_begin_m), message_block_bytes_k);
+        std::copy(message_begin_m, message_begin_m + to_copy, message_schedule_m.data());
+        return to_copy;
     }
 
-    constexpr void pad_last_block(size_t length)
+    constexpr void pad_last_block(size_t copied_input_block_length)
     {
-        if (length < message_block_bytes_k)
+        assert(copied_input_block_length < message_block_bytes_k);
+
+        if (padding_m == padding_t::none)
         {
-            message_schedule_m.at(length) = padding_one_k;
-            ++length;
+            message_schedule_m.at(copied_input_block_length) = padding_one_k;
+            ++copied_input_block_length;
+            padding_m = padding_t::one_bit;
         }
-        if (length <= last_block_size_k)
+
+        auto beg = message_schedule_m.data() + copied_input_block_length;
+        if (copied_input_block_length <= last_block_size_k)
         {
-            const auto beg = message_schedule_m.data() + length;
-            const auto end = beg + last_block_size_k - length;
+            auto end = message_schedule_m.data() + last_block_size_k;
             std::fill(beg, end, 0);
             append_message_length(end, message_length_m * bits_per_byte_k);
+            padding_m = padding_t::size;
+            beg = end + 8;
         }
+        std::fill(beg, std::to_address(message_schedule_m.end()), 0);
     }
 
     constexpr void append_message_length(uint8_t* destination, size_t length) const
@@ -169,50 +202,34 @@ private:
 
     constexpr void compress()
     {
-        auto a = h_k[0];
-        auto b = h_k[1];
-        auto c = h_k[2];
-        auto d = h_k[3];
-        auto e = h_k[4];
-        auto f = h_k[5];
-        auto g = h_k[6];
-        auto h = h_k[7];
+        std::array<uint32_t, 8> h{ h_m };
 
         for (int i = 0; i < 64; ++i)
         {
-            const auto sigma1 = (right_rotate(e, 6)) ^ (right_rotate(e, 11)) ^ (right_rotate(e, 25));
-            const auto choice = (e & f) ^ ((~e) & g);
-            const auto temp1 = h + sigma1 + choice + k_k[i] + to_uint<uint32_t>(message_schedule_m.data() + i * 4);
-            const auto sigma0 = (right_rotate(a, 2)) ^ (right_rotate(a, 13)) ^ (right_rotate(a, 22));
-            const auto majority = (a & b) ^ (a & c) ^ (b & c);
+            const auto sigma1 = (right_rotate(h[4], 6)) ^ (right_rotate(h[4], 11)) ^ (right_rotate(h[4], 25));
+            const auto choice = (h[4] & h[5]) ^ ((~h[4]) & h[6]);
+            const auto temp1 = h[7] + sigma1 + choice + k_k[i] + to_uint<uint32_t>(message_schedule_m.data() + i * 4);
+            const auto sigma0 = (right_rotate(h[0], 2)) ^ (right_rotate(h[0], 13)) ^ (right_rotate(h[0], 22));
+            const auto majority = (h[0] & h[1]) ^ (h[0] & h[2]) ^ (h[1] & h[2]);
             const auto temp2 = sigma0 + majority;
 
-            h = g;
-            g = f;
-            f = e;
-            e = d + temp1;
-            d = c;
-            c = b;
-            b = a;
-            a = temp1 + temp2;
+            std::ranges::rotate(h, h.end() - 1);
+            h[0] = temp1 + temp2;
+            h[4] += temp1;
         }
 
-        const auto h0 = h_k[0] + a;
-        const auto h1 = h_k[1] + b;
-        const auto h2 = h_k[2] + c;
-        const auto h3 = h_k[3] + d;
-        const auto h4 = h_k[4] + e;
-        const auto h5 = h_k[5] + f;
-        const auto h6 = h_k[6] + g;
-        const auto h7 = h_k[7] + h;
-
-        to_uint8_array(h0, &message_digest_m[0]);
-        to_uint8_array(h1, &message_digest_m[4]);
-        to_uint8_array(h2, &message_digest_m[8]);
-        to_uint8_array(h3, &message_digest_m[12]);
-        to_uint8_array(h4, &message_digest_m[16]);
-        to_uint8_array(h5, &message_digest_m[20]);
-        to_uint8_array(h6, &message_digest_m[24]);
-        to_uint8_array(h7, &message_digest_m[28]);
+        for (size_t i = 0; i < 8; ++i)
+        {
+            h_m[i] += h[i];
+        }
     }
+
+    constexpr void final_hash()
+    {
+        for (size_t i = 0; i < 8; ++i)
+        {
+            to_uint8_array(h_m[i], &message_digest_m[i * 4]);
+        }
+    }
+
 };
