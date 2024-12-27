@@ -1,15 +1,12 @@
-#include "sha256.h"
+#include "sha256.hpp"
 
 #include <algorithm>
 #include <array>
 #include <bit>
 #include <cassert>
-#include <iostream>
+#include <string>
 
-static constexpr bool operator==(const std::array<uint8_t, 32>& digest, std::array<uint8_t, 32> str)
-{
-    return std::ranges::equal(digest, str);
-}
+using namespace jsribar::cryptography::sha2;
 
 
 constexpr std::array<uint8_t, 8> data{ 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
@@ -28,49 +25,21 @@ static_assert(right_rotate(uint32_t(0x01020304), 7) == 0x08020406);
 
 
 
-static_assert(sha256_t{ {uint8_t(8)} }.data().front() == uint8_t(8));
+static_assert(sha256_t{ }.digest() == hex_to_binary<32>{ "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" }());
 
 
-static_assert(sha256_t{ {uint8_t(8)} }.data().front() == uint8_t(8));
-
-
-static constexpr sha256_t sh2{ sha256_t{{uint8_t('a'), uint8_t('b'), uint8_t('c') }} };
-
-static_assert(sh2.data().front() == uint8_t('a'));
-static_assert(sh2.data().at(16 * 4 - 1) == uint8_t(24));
+static_assert(sha256_t{ {uint8_t('a'), uint8_t('b'), uint8_t('c') } }.digest() == hex_to_binary<32>{ "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad" }());
 
 
 static constexpr std::array<uint8_t, 3> input1{ 'a', 'b', 'c' };
-
 static constexpr sha256_t sh3{ input1.data(), input1.size() };
-
-static_assert(*(sh3.data().begin()) == uint8_t('a'));
-static_assert(*(sh3.data().begin() + 1) == uint8_t('b'));
-static_assert(*(sh3.data().begin() + 2) == uint8_t('c'));
-static_assert(*(sh3.data().begin() + 3) == uint8_t(0x80));
-static_assert(to_uint<uint32_t>(&sh3.data().at(15 * 4)) == uint32_t(24));
-static_assert(to_uint<uint32_t>(&sh3.data().at(16 * 4)) == uint32_t(0x61626380));
-static_assert(to_uint<uint32_t>(&sh3.data().at(17 * 4)) == uint32_t(0x000F0000));
-static_assert(to_uint<uint32_t>(&sh3.data().at(25 * 4)) == uint32_t(0xB73679A2));
-static_assert(to_uint<uint32_t>(&sh3.data().at(30 * 4)) == uint32_t(0x702138A4));
-static_assert(to_uint<uint32_t>(&sh3.data().at(31 * 4)) == uint32_t(0xD3B7973B));
-static_assert(to_uint<uint32_t>(&sh3.data().at(32 * 4)) == uint32_t(0x93F5997F));
-static_assert(to_uint<uint32_t>(&sh3.data().at(35 * 4)) == uint32_t(0xF10A5C62));
-static_assert(to_uint<uint32_t>(&sh3.data().at(46 * 4)) == uint32_t(0x7A290D5D));
-static_assert(to_uint<uint32_t>(&sh3.data().at(62 * 4)) == uint32_t(0xEEABA2CC));
-static_assert(to_uint<uint32_t>(&sh3.data().at(63 * 4)) == uint32_t(0x12B1EDEB));
-
-//static_assert(sh3.digest() == std::array<uint8_t, 32>{ '\xBA', '\x78', '\x16', '\xBF', '\x8F', '\x01', '\xCF', '\xEA', '\x41', '\x41', '\x40', '\xDE', '\x5D', '\xAE', '\x22', '\x23', '\xB0', '\x03', '\x61', '\xA3', '\x96', '\x17', '\x7A', '\x9C', '\xB4', '\x10', '\xFF', '\x61', '\xF2', '\x00', '\x15', '\xAD' });
+static_assert(sh3.digest() == hex_to_binary<32>{ "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad" }());
 
 
 static constexpr uint8_t input2[] = { "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRS" };
-
 static constexpr sha256_t sh4{ input2, sizeof(input2) - 1 };
+static_assert(sh4.digest() == hex_to_binary<32>{ "dd00794e0454db49259b6c426331d5e0cdf642fc0d7353fb85ee89519aafd995" }());
 
-static_assert(*(sh4.data().begin()) == uint8_t('a'));
-static_assert(*(sh4.data().begin() + 1) == uint8_t('b'));
-static_assert(*(sh4.data().begin() + 2) == uint8_t('c'));
-static_assert(to_uint<uint64_t>(&sh4.data().at(14 * 4)) == 440);
 
 int main()
 {
@@ -101,21 +70,24 @@ int main()
         assert(buffer.at(7) == 0x08);
     }
 
+
+    {
+#pragma warning( suppress : 4838)
+        const std::array<uint8_t, 32> input{ '\xBA', '\x78', '\x16', '\xBF', '\x8F', '\x01', '\xCF', '\xEA', '\x41', '\x41', '\x40', '\xDE', '\x5D', '\xAE', '\x22', '\x23', '\xB0', '\x03', '\x61', '\xA3', '\x96', '\x17', '\x7A', '\x9C', '\xB4', '\x10', '\xFF', '\x61', '\xF2', '\x00', '\x15', '\xAD' };
+        assert(hex_to_binary<32>{ "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad" }() == input);
+    }
+
+
     {
         sha256_t sh{ };
 
-#pragma warning( suppress : 4838)
-        const std::array<uint8_t, 32> str{ '\xE3', '\xB0', '\xC4', '\x42', '\x98', '\xFC', '\x1C', '\x14', '\x9A', '\xFB', '\xF4', '\xC8', '\x99', '\x6F', '\xB9', '\x24', '\x27', '\xAE', '\x41', '\xE4', '\x64', '\x9B', '\x93', '\x4C', '\xA4', '\x95', '\x99', '\x1B', '\x78', '\x52', '\xB8', '\x55' };
-        assert(std::ranges::equal(sh.digest(), str));
+        assert(sh.digest() == hex_to_binary<32>{ "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" }());
     }
 
     {
         sha256_t sh{ {uint8_t('a'), uint8_t('b'), uint8_t('c') } };
-        assert(to_uint<uint64_t>(&sh.data().at(14 * 4)) == 24);
 
-#pragma warning( suppress : 4838)
-        const std::array<uint8_t, 32> str{ '\xBA', '\x78', '\x16', '\xBF', '\x8F', '\x01', '\xCF', '\xEA', '\x41', '\x41', '\x40', '\xDE', '\x5D', '\xAE', '\x22', '\x23', '\xB0', '\x03', '\x61', '\xA3', '\x96', '\x17', '\x7A', '\x9C', '\xB4', '\x10', '\xFF', '\x61', '\xF2', '\x00', '\x15', '\xAD' };
-        assert(std::ranges::equal(sh.digest(), str));
+        assert(sh.digest() == hex_to_binary<32>{ "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad" }());
     }
 
     {
@@ -123,10 +95,7 @@ int main()
 
         sha256_t sh{ std::bit_cast<const uint8_t*>(input.data()), input.size() };
 
-        assert(*(sh.data().begin()) == uint8_t('a'));
-        assert(*(sh.data().begin() + 1) == uint8_t('b'));
-        assert(*(sh.data().begin() + 2) == uint8_t('c'));
-        assert(to_uint<uint64_t>(&sh.data().at(14 * 4)) == 440);
+        assert(sh.digest() == hex_to_binary<32>{ "dd00794e0454db49259b6c426331d5e0cdf642fc0d7353fb85ee89519aafd995" }());
     }
 
     {
@@ -134,12 +103,7 @@ int main()
 
         sha256_t sh{ std::bit_cast<const uint8_t*>(input.data()), input.size() };
 
-        //assert(sh.data().at(62) == uint8_t(0x80));
-        //assert(sh.data().at(63) == uint8_t(0));
-
-#pragma warning( suppress : 4838)
-        const std::array<uint8_t, 32> str{ '\xCF', '\x00', '\x71', '\xA0', '\x83', '\xAD', '\x3E', '\x47', '\x34', '\x9D', '\x2E', '\x3F', '\xBC', '\x89', '\x6D', '\x07', '\xA0', '\xD5', '\x05', '\x80', '\xB3', '\x35', '\xC3', '\x7E', '\x39', '\x7D', '\x40', '\x91', '\xBF', '\x8E', '\x71', '\x3B' };
-        assert(std::ranges::equal(sh.digest(), str));
+        assert(sh.digest() == hex_to_binary<32>{ "cf0071a083ad3e47349d2e3fbc896d07a0d50580b335c37e397d4091bf8e713b" }());
     }
 
     {
@@ -147,11 +111,7 @@ int main()
 
         sha256_t sh{ std::bit_cast<const uint8_t*>(input.data()), input.size() };
 
-        //assert(sh.data().at(63) == uint8_t('@'));
-        
-#pragma warning( suppress : 4838)
-        const std::array<uint8_t, 32> str{ '\x8B', '\xD8', '\xB7', '\x1A', '\xCF', '\x92', '\x7D', '\xB5', '\xF9', '\x41', '\x00', '\xAE', '\x13', '\x7B', '\xFB', '\x57', '\x69', '\xEE', '\x57', '\xD6', '\x0B', '\x95', '\xDB', '\xBA', '\xB2', '\x94', '\x17', '\x3E', '\xF0', '\x73', '\xC0', '\x1A' };
-        assert(std::ranges::equal(sh.digest(), str));
+        assert(sh.digest() == hex_to_binary<32>{ "8bd8b71acf927db5f94100ae137bfb5769ee57d60b95dbbab294173ef073c01a" }());
     }
 
     {
@@ -159,9 +119,7 @@ int main()
 
         sha256_t sh{ std::bit_cast<const uint8_t*>(input.data()), input.size() };
 
-#pragma warning( suppress : 4838)
-        const std::array<uint8_t, 32> str{ '\xB7', '\x80', '\xD7', '\x98', '\x61', '\x6B', '\x8E', '\xF8', '\xFE', '\x46', '\x1F', '\x34', '\x40', '\xA8', '\x0E', '\x3F', '\x79', '\x90', '\x16', '\x6B', '\x09', '\x7D', '\xF3', '\x4A', '\x47', '\x01', '\xBB', '\x32', '\x46', '\xFD', '\x38', '\x27' };
-        assert(std::ranges::equal(sh.digest(), str));
+        assert(sh.digest() == hex_to_binary<32>{ "b780d798616b8ef8fe461f3440a80e3f7990166b097df34a4701bb3246fd3827" }());
     }
 
     {
@@ -169,8 +127,14 @@ int main()
 
         sha256_t sh{ std::bit_cast<const uint8_t*>(input.data()), input.size() };
 
-#pragma warning( suppress : 4838)
-        const std::array<uint8_t, 32> str{ '\x75', '\x63', '\x6A', '\xA5', '\xC9', '\x63', '\xEC', '\xD7', '\x5A', '\xE9', '\x37', '\xF9', '\x83', '\x68', '\x5C', '\xD9', '\x87', '\xAF', '\xBA', '\xB3', '\x0A', '\x96', '\xB4', '\x04', '\x69', '\xD1', '\x85', '\x9C', '\x98', '\xF7', '\x79', '\x5E' };
-        assert(std::ranges::equal(sh.digest(), str));
+        assert(sh.digest() == hex_to_binary<32>{ "75636aa5c963ecd75ae937f983685cd987afbab30a96b40469d1859c98f7795e" }());
+    }
+
+    {
+        std::string input{ "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
+
+        sha256_t sh{ std::bit_cast<const uint8_t*>(input.data()), input.size() };
+
+        assert(sh.digest() == hex_to_binary<32>{ "38152aa07185f3a9b730ca5f1985797d17e52fdbb1917cd5481428864c610b0a" }());
     }
 }
