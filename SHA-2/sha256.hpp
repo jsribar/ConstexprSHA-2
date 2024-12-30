@@ -11,27 +11,15 @@
 namespace jsribar::cryptography::sha2
 {
 
-class sha256_t
+template <typename H, size_t digest_size>
+class sha2x_base_t
 {
-    static constexpr size_t digest_size_k{ 32 };
+    static constexpr size_t digest_size_k{ digest_size };
     static constexpr size_t message_block_size_k{ 64 };
     static constexpr size_t message_schedule_bytes_k{ 64 * 4 };
 
-public:
-    using message_digest_t = std::array<uint8_t, digest_size_k>;
-    using message_schedule_t = std::array<uint8_t, message_schedule_bytes_k>;
-
-    constexpr sha256_t(std::initializer_list<char> input)
-        : sha256_t(input.begin(), input.size())
-    {
-    }
-
-    constexpr explicit sha256_t(std::string_view input)
-        : sha256_t(input.data(), input.size())
-    {
-    }
-
-    constexpr explicit sha256_t(const char* input, size_t length)
+protected:
+    constexpr explicit sha2x_base_t(const char* input, size_t length)
         : message_begin_m(input)
         , message_end_m(input + length)
         , message_length_m(length)
@@ -49,6 +37,10 @@ public:
         final_hash();
     }
 
+public:
+    using message_digest_t = std::array<uint8_t, digest_size_k>;
+    using message_schedule_t = std::array<uint8_t, message_schedule_bytes_k>;
+
     constexpr message_digest_t digest() const
     {
         return message_digest_m;
@@ -63,7 +55,9 @@ private:
     message_schedule_t message_schedule_m{ 0 };
     message_digest_t message_digest_m{ 0 };
 
-    std::array<uint32_t, 8> h_m{ h_k };
+    const H initial_hash_values_k;
+
+    std::array<uint32_t, 8> h_m{ initial_hash_values_k.values };
 
     // Padding(s) done.
     enum class padding_t
@@ -77,10 +71,6 @@ private:
 
     static constexpr uint8_t padding_one_k{ 0x80 };
     static constexpr size_t last_block_size_k{ message_block_size_k - 8 };
-
-    static constexpr std::array<uint32_t, 8> h_k{
-        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
-    };
 
     static constexpr std::array<uint32_t, 64> k_k{
         0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -184,10 +174,64 @@ private:
 
     constexpr void final_hash()
     {
-        for (size_t i = 0; i < 8; ++i)
+        for (size_t i = 0; i < digest_size / 4; ++i)
         {
             to_uint8_array(h_m[i], &message_digest_m[i * 4]);
         }
+    }
+};
+
+
+struct hash_values_256
+{
+    static constexpr std::array<uint32_t, 8> values{
+        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+    };
+};
+
+class sha256_t : public sha2x_base_t<hash_values_256, 32>
+{
+public:
+    constexpr sha256_t(std::initializer_list<char> input)
+        : sha2x_base_t(input.begin(), input.size())
+    {
+    }
+
+    constexpr explicit sha256_t(std::string_view input)
+        : sha2x_base_t(input.data(), input.size())
+    {
+    }
+
+    constexpr explicit sha256_t(const char* input, size_t length)
+        : sha2x_base_t(input, length)
+    {
+    }
+};
+
+
+struct hash_values_224
+{
+    static constexpr std::array<uint32_t, 8> values{
+        0xc1059ed8, 0x367cd507, 0x3070dd17, 0xf70e5939, 0xffc00b31, 0x68581511, 0x64f98fa7, 0xbefa4fa4,
+    };
+};
+
+class sha224_t : public sha2x_base_t<hash_values_224, 28>
+{
+public:
+    constexpr sha224_t(std::initializer_list<char> input)
+        : sha2x_base_t(input.begin(), input.size())
+    {
+    }
+
+    constexpr explicit sha224_t(std::string_view input)
+        : sha2x_base_t(input.data(), input.size())
+    {
+    }
+
+    constexpr explicit sha224_t(const char* input, size_t length)
+        : sha2x_base_t(input, length)
+    {
     }
 };
 

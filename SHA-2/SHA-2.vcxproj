@@ -76,9 +76,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="test_sha224.cpp" />
     <ClCompile Include="test_sha256.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="hex_to_binary.hpp" />
     <ClInclude Include="sha256.hpp" />
     <ClInclude Include="util.hpp" />
   </ItemGroup>

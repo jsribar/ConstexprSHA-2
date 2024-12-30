@@ -4,51 +4,11 @@
 
 #include "sha256.hpp"
 
+#include "hex_to_binary.hpp"
+
+using hex_to_binary = hex_to_binary_t<32>;
+
 using namespace jsribar::cryptography::sha2;
-
-template <size_t N = 32>
-class hex_to_binary
-{
-public:
-    constexpr explicit hex_to_binary(std::string_view str)
-    {
-        assert(str.size() == 2 * N);
-
-        const auto hex_to_nibble = [](const auto c) -> uint8_t
-            {
-                if (c >= '0' && c <= '9')
-                {
-                    return c - '0';
-                }
-                if (c >= 'a' && c <= 'f')
-                {
-                    return c - 'a' + 10;
-                }
-                if (c >= 'A' && c <= 'F')
-                {
-                    return c - 'A' + 10;
-                }
-                assert(false);
-                return 0;
-            };
-
-        for (int i = 0; i < 2 * N; i += 2)
-        {
-            const uint8_t hi = hex_to_nibble(str[i]);
-            const uint8_t lo = hex_to_nibble(str[i + 1]);
-            data_m[i / 2] = uint8_t(16) * hi + lo;
-        }
-    }
-
-    constexpr std::array<uint8_t, N> operator()()
-    {
-        return data_m;
-    }
-
-private:
-    std::array<uint8_t, N> data_m;
-};
-
 
 TEST_CASE("SHA-256 of empty string", "[SHA-256]")
 {
@@ -119,7 +79,7 @@ TEST_CASE("Compile time SHA-256 evaluation", "[SHA-256]")
 
     SECTION("String 3 bytes long")
     {
-        STATIC_REQUIRE(sha256_t{ {'a', 'b', 'c' } }.digest() == hex_to_binary<32>{ "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad" }());
+        STATIC_REQUIRE(sha256_t{ {'a', 'b', 'c' } }.digest() == hex_to_binary{ "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad" }());
     }
 
     SECTION("String 55 bytes long")
@@ -133,4 +93,3 @@ TEST_CASE("Compile time SHA-256 evaluation", "[SHA-256]")
         STATIC_REQUIRE(sha256_t{ input, sizeof(input) - 1 }.digest() == hex_to_binary{ "cf0071a083ad3e47349d2e3fbc896d07a0d50580b335c37e397d4091bf8e713b" }());
     }
 }
-

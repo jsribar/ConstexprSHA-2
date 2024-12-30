@@ -18,12 +18,18 @@
     <ClCompile Include="test_sha256.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test_sha224.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sha256.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="util.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="hex_to_binary.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
