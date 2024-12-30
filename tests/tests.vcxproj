@@ -78,11 +78,13 @@
   <ItemGroup>
     <ClCompile Include="test_sha224.cpp" />
     <ClCompile Include="test_sha256.cpp" />
+    <ClCompile Include="test_sha384.cpp" />
+    <ClCompile Include="test_sha512.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\sha256.hpp" />
+    <ClInclude Include="..\include\util.hpp" />
     <ClInclude Include="hex_to_binary.hpp" />
-    <ClInclude Include="sha256.hpp" />
-    <ClInclude Include="util.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

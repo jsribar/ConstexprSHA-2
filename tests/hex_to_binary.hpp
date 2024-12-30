@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <string_view>
 
-template <size_t N = 32>
+template <size_t N>
 class hex_to_binary_t
 {
 public:

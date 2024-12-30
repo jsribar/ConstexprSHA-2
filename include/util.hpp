@@ -44,6 +44,16 @@ constexpr void to_uint8_array<uint8_t>(uint8_t value, uint8_t* dest)
     *dest = value;
 }
 
+template <size_t length, typename T>
+constexpr void to_uint8_array(T value, uint8_t* dest)
+{
+    for (int i = length - 1; i >= 0; --i)
+    {
+        const auto n = value % 256;
+        *(dest + i) = uint8_t(n);
+        value /= T(256);
+    }
+}
 
 template <typename T>
 constexpr T right_rotate(const T input, size_t n)
