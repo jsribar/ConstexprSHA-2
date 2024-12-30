@@ -6,6 +6,7 @@
 #include <array>
 #include <cassert>
 #include <cstdint>
+#include <string_view>
 
 namespace jsribar::cryptography::sha2
 {
@@ -20,15 +21,20 @@ public:
     using message_digest_t = std::array<uint8_t, digest_size_k>;
     using message_schedule_t = std::array<uint8_t, message_schedule_bytes_k>;
 
-    constexpr sha256_t(std::initializer_list<uint8_t> input)
+    constexpr sha256_t(std::initializer_list<char> input)
         : sha256_t(input.begin(), input.size())
     {
     }
 
-    constexpr explicit sha256_t(const uint8_t* input, size_t length)
+    constexpr explicit sha256_t(std::string_view input)
+        : sha256_t(input.data(), input.size())
+    {
+    }
+
+    constexpr explicit sha256_t(const char* input, size_t length)
         : message_begin_m(input)
         , message_end_m(input + length)
-        , message_bits_m(length * 8)
+        , message_length_m(length)
     {
         do
         {
@@ -49,20 +55,21 @@ public:
     }
 
 private:
-    const uint8_t* message_begin_m{ nullptr };
-    const uint8_t* message_end_m{ nullptr };
+    const char* message_begin_m{ nullptr };
+    const char* message_end_m{ nullptr };
 
-    const size_t message_bits_m{ 0 };
+    const size_t message_length_m{ 0 };
 
     message_schedule_t message_schedule_m{ 0 };
     message_digest_t message_digest_m{ 0 };
 
     std::array<uint32_t, 8> h_m{ h_k };
 
+    // Padding(s) done.
     enum class padding_t
     {
         none,
-        one_bit,
+        bit_one,
         size,
     };
 
@@ -95,6 +102,7 @@ private:
         return to_copy;
     }
 
+    // Append single '1' bit to the message and add original message length to the end of the message block.
     constexpr void pad_last_block(size_t copied_input_block_length)
     {
         assert(copied_input_block_length < message_block_size_k);
@@ -103,7 +111,7 @@ private:
         {
             message_schedule_m.at(copied_input_block_length) = padding_one_k;
             ++copied_input_block_length;
-            padding_m = padding_t::one_bit;
+            padding_m = padding_t::bit_one;
         }
 
         const auto beg = message_schedule_m.data() + copied_input_block_length;
@@ -111,7 +119,7 @@ private:
         {
             auto end = message_schedule_m.data() + last_block_size_k;
             std::fill(beg, end, 0);
-            append_message_length(end, message_bits_m);
+            append_message_length(end, message_length_m * 8);
             padding_m = padding_t::size;
         }
         else
@@ -125,6 +133,7 @@ private:
         to_uint8_array<uint64_t>(length, destination);
     }
 
+    // Extend the first 16 words into the remaining 48 words w[16..63] of the message schedule array.
     constexpr void extend_message_schedule()
     {
         for (size_t offset = 0; offset < (64 - 16) * 4; offset += 4)
@@ -180,7 +189,6 @@ private:
             to_uint8_array(h_m[i], &message_digest_m[i * 4]);
         }
     }
-
 };
 
 }
