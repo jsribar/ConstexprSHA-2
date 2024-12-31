@@ -30,6 +30,8 @@ constexpr sha512_t sha512{ str };
 constexpr auto digest512 = sha512.digest(); 
 ```
 
+Code has been successfully compiled with Visual Studio 2022 Version 17.12.3 and GCC 13.2.0.
+
 ## Unit tests
 
 `tests` directory contains unit tests. Unit tests use [Catch2 v2.x framework](https://github.com/catchorg/Catch2/tree/v2.x). To compile and run unit tests in Visual Studio solution provided, adjust the include path or simply set the environment variable `ThirParty` to point to the parent directory inside which Catch2 framework is cloned.
