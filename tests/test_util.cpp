@@ -3,6 +3,7 @@
 #include <util.hpp>
 
 #include <array>
+#include <cstring>
 
 using namespace jsribar::cryptography::sha2;
 
