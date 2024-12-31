@@ -37,6 +37,9 @@
 #include <cstdint>
 #include <string_view>
 
+// Implementation of SHA-2 algorithms that enables compile time evaluation of string digests.
+// For technical details check: https://en.wikipedia.org/wiki/SHA-2
+
 namespace jsribar::cryptography::sha2
 {
 
