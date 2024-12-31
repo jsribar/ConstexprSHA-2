@@ -1,3 +1,32 @@
+// SPDX-License-Identifier: MIT
+
+/*
+ * MIT License
+ * 
+ * Copyright (c) 2024 by Julijan Šribar
+ * 
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use, copy,
+ * modify, merge, publish, distribute, sublicense, and/or sell copies 
+ * of the Software, and to permit persons to whom the Software is 
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be 
+ * included in all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN 
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+ * SOFTWARE.
+ * 
+ */
+
 #pragma once
 
 #include "util.hpp"
@@ -54,7 +83,7 @@ constexpr uint64_t sigma1(uint64_t h)
 }
 
 // Base class for all implementations.
-template <typename T, typename HashValues, typename RoundConstants, size_t message_schedule_length, size_t digest_size>
+template <typename T, typename InitialHashValues, typename RoundConstants, size_t message_schedule_length, size_t digest_size>
 class sha_base_t
 {
 protected:
@@ -94,7 +123,7 @@ private:
     message_schedule_t message_schedule_m{ 0 };
     message_digest_t message_digest_m{ 0 };
 
-    static constexpr HashValues initial_hash_values_k;
+    static constexpr InitialHashValues initial_hash_values_k;
 
     std::array<T, 8> h_m{ initial_hash_values_k.values };
 
@@ -152,7 +181,7 @@ private:
 
     constexpr void append_message_length(uint8_t* destination, size_t length) const
     {
-        to_uint8_array<sizeof(T) * 2>(length, destination);
+        to_uint8_array(length, destination, sizeof(T) * 2);
     }
 
     // Extend the first 16 words into the remaining words w[16..63] (or w[16..79] for SHA-512) of the message schedule array.
@@ -194,7 +223,7 @@ private:
             h[4] += temp1;
         }
 
-        for (size_t i = 0; i < 8; ++i)
+        for (size_t i = 0; i < h_m.size(); ++i)
         {
             h_m[i] += h[i];
         }
@@ -202,15 +231,19 @@ private:
 
     constexpr void final_hash()
     {
-        for (size_t i = 0; i < digest_size / sizeof(T); ++i)
+        // If final digest is smaller than evaluated, trim the rightmost surplus bits.
+        int digest_len = digest_size;
+        for (size_t i = 0; i < h_m.size() && digest_len > 0; ++i)
         {
-            to_uint8_array(h_m[i], &message_digest_m[i * sizeof(T)]);
+            const auto len = std::min<int>(sizeof(T), digest_len);
+            to_uint8_array(h_m[i], &message_digest_m[i * sizeof(T)], len);
+            digest_len -= len;
         }
     }
 };
 
 // Round constants for SHA-224/SHA-256.
-class round_constants_2x
+class round_constants_2x_t
 {
 public:
     constexpr uint32_t operator[](int index) const
@@ -237,7 +270,7 @@ private:
 };
 
 // Initial hash values for SHA-256.
-struct hash_values_256
+struct initial_hash_values_256_t
 {
     static constexpr std::array<uint32_t, 8> values{
         0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
@@ -245,7 +278,7 @@ struct hash_values_256
 };
 
 // SHA-256 implementation.
-class sha256_t : public sha_base_t<uint32_t, hash_values_256, round_constants_2x, 256, 32>
+class sha256_t : public sha_base_t<uint32_t, initial_hash_values_256_t, round_constants_2x_t, 256, 32>
 {
 public:
     constexpr sha256_t(std::initializer_list<char> input)
@@ -265,7 +298,7 @@ public:
 };
 
 // Initial hash values for SHA-224.
-struct hash_values_224
+struct initital_hash_values_224_t
 {
     static constexpr std::array<uint32_t, 8> values{
         0xc1059ed8, 0x367cd507, 0x3070dd17, 0xf70e5939, 0xffc00b31, 0x68581511, 0x64f98fa7, 0xbefa4fa4
@@ -273,7 +306,7 @@ struct hash_values_224
 };
 
 // SHA-224 implementation.
-class sha224_t : public sha_base_t<uint32_t, hash_values_224, round_constants_2x, 256, 28>
+class sha224_t : public sha_base_t<uint32_t, initital_hash_values_224_t, round_constants_2x_t, 256, 28>
 {
 public:
     constexpr sha224_t(std::initializer_list<char> input)
@@ -293,7 +326,7 @@ public:
 };
 
 // Round constants for SHA-384/SHA-256.
-class round_constants_5x
+class round_constants_5x_t
 {
 public:
     constexpr uint64_t operator[](int index) const
@@ -328,7 +361,7 @@ private:
 };
 
 // Initial hash values for SHA-512.
-struct hash_values_512
+struct initial_hash_values_512_t
 {
     static constexpr std::array<uint64_t, 8> values{
         0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
@@ -337,7 +370,7 @@ struct hash_values_512
 };
 
 // SHA-512 implementation.
-class sha512_t : public sha_base_t<uint64_t, hash_values_512, round_constants_5x, 640, 64>
+class sha512_t : public sha_base_t<uint64_t, initial_hash_values_512_t, round_constants_5x_t, 640, 64>
 {
 public:
     constexpr sha512_t(std::initializer_list<char> input)
@@ -357,7 +390,7 @@ public:
 };
 
 // Initial hash values for SHA-384.
-struct hash_values_384
+struct initial_hash_values_384_t
 {
     static constexpr std::array<uint64_t, 8> values{
         0xcbbb9d5dc1059ed8, 0x629a292a367cd507, 0x9159015a3070dd17, 0x152fecd8f70e5939,
@@ -366,7 +399,7 @@ struct hash_values_384
 };
 
 // SHA-384 implementation.
-class sha384_t : public sha_base_t<uint64_t, hash_values_384, round_constants_5x, 640, 48>
+class sha384_t : public sha_base_t<uint64_t, initial_hash_values_384_t, round_constants_5x_t, 640, 48>
 {
 public:
     constexpr sha384_t(std::initializer_list<char> input)
@@ -380,6 +413,64 @@ public:
     }
 
     constexpr explicit sha384_t(const char* input, size_t length)
+        : sha_base_t(input, length)
+    {
+    }
+};
+
+// Initial hash values for SHA-512/224.
+struct initial_hash_values_512_224_t
+{
+    static constexpr std::array<uint64_t, 8> values{
+        0x8c3d37c819544da2, 0x73e1996689dcd4d6, 0x1dfab7ae32ff9c82, 0x679dd514582f9fcf,
+        0x0f6d2b697bd44da8, 0x77e36f7304C48942, 0x3f9d85a86a1d36C8, 0x1112e6ad91d692a1
+    };
+};
+
+// SHA-512/224 implementation.
+class sha512_224_t : public sha_base_t<uint64_t, initial_hash_values_512_224_t, round_constants_5x_t, 640, 28>
+{
+public:
+    constexpr sha512_224_t(std::initializer_list<char> input)
+        : sha_base_t(input.begin(), input.size())
+    {
+    }
+
+    constexpr explicit sha512_224_t(std::string_view input)
+        : sha_base_t(input.data(), input.size())
+    {
+    }
+
+    constexpr explicit sha512_224_t(const char* input, size_t length)
+        : sha_base_t(input, length)
+    {
+    }
+};
+
+// Initial hash values for SHA-512/256.
+struct initial_hash_values_512_256_t
+{
+    static constexpr std::array<uint64_t, 8> values{
+        0x22312194fc2bf72c, 0x9f555fa3c84c64c2, 0x2393b86b6f53b151, 0x963877195940eabd,
+        0x96283ee2a88effe3, 0xbe5e1e2553863992, 0x2b0199fc2c85b8aa, 0x0eb72ddC81c52ca2
+    };
+};
+
+// SHA-512/256 implementation.
+class sha512_256_t : public sha_base_t<uint64_t, initial_hash_values_512_256_t, round_constants_5x_t, 640, 32>
+{
+public:
+    constexpr sha512_256_t(std::initializer_list<char> input)
+        : sha_base_t(input.begin(), input.size())
+    {
+    }
+
+    constexpr explicit sha512_256_t(std::string_view input)
+        : sha_base_t(input.data(), input.size())
+    {
+    }
+
+    constexpr explicit sha512_256_t(const char* input, size_t length)
         : sha_base_t(input, length)
     {
     }

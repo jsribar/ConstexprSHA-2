@@ -27,6 +27,15 @@
     <ClCompile Include="test_sha384.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test_util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test_sha512_256.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test_sha512_224.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hex_to_binary.hpp">

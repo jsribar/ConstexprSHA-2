@@ -80,6 +80,8 @@
     <ClCompile Include="test_sha256.cpp" />
     <ClCompile Include="test_sha384.cpp" />
     <ClCompile Include="test_sha512.cpp" />
+    <ClCompile Include="test_sha512_224.cpp" />
+    <ClCompile Include="test_sha512_256.cpp" />
     <ClCompile Include="test_util.cpp" />
   </ItemGroup>
   <ItemGroup>

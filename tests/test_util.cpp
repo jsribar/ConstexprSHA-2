@@ -33,24 +33,24 @@ TEST_CASE("to_uint function converts sequence of big-endian bytes to unsigned in
 
 TEST_CASE("to_uint8_array converts unsigned integer to a sequence of big-endian bytes", "[to_uint]")
 {
-    std::array<uint8_t, 8> buffer{ 0 };
+    std::array<uint8_t, 8> buffer{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
     SECTION("uint8_t")
     {
         to_uint8_array(uint8_t(0x01), buffer.data());
-        REQUIRE(memcmp(buffer.data(), "\x01\x00\x00\x00\x00\x00\x00\x00", 8) == 0);
+        REQUIRE(memcmp(buffer.data(), "\x01\xFF\xFF\xFF\xFF\xFF\xFF\xFF", 8) == 0);
     }
 
     SECTION("uint16_t")
     {
         to_uint8_array(uint16_t(0x0102), buffer.data());
-        REQUIRE(memcmp(buffer.data(), "\x01\x02\x00\x00\x00\x00\x00\x00", 8) == 0);
+        REQUIRE(memcmp(buffer.data(), "\x01\x02\xFF\xFF\xFF\xFF\xFF\xFF", 8) == 0);
     }
 
     SECTION("uint32_t")
     {
         to_uint8_array(uint32_t(0x01020304), buffer.data());
-        REQUIRE(memcmp(buffer.data(), "\x01\x02\x03\x04\x00\x00\x00\x00", 8) == 0);
+        REQUIRE(memcmp(buffer.data(), "\x01\x02\x03\x04\xFF\xFF\xFF\xFF", 8) == 0);
     }
 
     SECTION("uint64_t")
@@ -62,42 +62,54 @@ TEST_CASE("to_uint8_array converts unsigned integer to a sequence of big-endian 
 
 TEST_CASE("to_uint8_array converts unsigned integer to a sequence of big-endian bytes of given length", "[to_uint]")
 {
-    std::array<uint8_t, 16> buffer{ 0 };
+    std::array<uint8_t, 16> buffer{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
-    SECTION("One byte")
+    SECTION("One byte exactly")
     {
-        to_uint8_array<1>(uint8_t(0x01), buffer.data());
-        REQUIRE(memcmp(buffer.data(), "\x01\x00\x00\x00\x00\x00\x00\x00", 8) == 0);
+        to_uint8_array(uint8_t(0x01), buffer.data(), 1);
+        REQUIRE(memcmp(buffer.data(), "\x01\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF", 16) == 0);
     }
 
-    SECTION("Two bytes")
+    SECTION("Two bytes exactly")
     {
-        to_uint8_array<2>(uint16_t(0x0102), buffer.data());
-        REQUIRE(memcmp(buffer.data(), "\x01\x02\x00\x00\x00\x00\x00\x00", 8) == 0);
+        to_uint8_array(uint16_t(0x0102), buffer.data(), 2);
+        REQUIRE(memcmp(buffer.data(), "\x01\x02\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF", 16) == 0);
     }
 
-    SECTION("Four bytes")
+    SECTION("Four bytes exactly")
     {
-        to_uint8_array<4>(0x01020304, buffer.data());
-        REQUIRE(memcmp(buffer.data(), "\x01\x02\x03\x04\x00\x00\x00\x00", 8) == 0);
+        to_uint8_array(0x01020304, buffer.data(), 4);
+        REQUIRE(memcmp(buffer.data(), "\x01\x02\x03\x04\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF", 16) == 0);
     }
 
-    SECTION("Eight bytes")
+    SECTION("Eight bytes exactly")
     {
-        to_uint8_array<8>(0x0102030405060708, buffer.data());
-        REQUIRE(memcmp(buffer.data(), "\x01\x02\x03\x04\x05\x06\x07\x08\x00\x00", 10) == 0);
+        to_uint8_array(0x0102030405060708, buffer.data(), 8);
+        REQUIRE(memcmp(buffer.data(), "\x01\x02\x03\x04\x05\x06\x07\x08\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF", 16) == 0);
     }
 
-    SECTION("Ten bytes")
+    SECTION("Length is two bytes larger")
     {
-        to_uint8_array<10>(0x0102030405060708, buffer.data());
-        REQUIRE(memcmp(buffer.data(), "\x00\x00\x01\x02\x03\x04\x05\x06\x07\x08\x00\x00", 12) == 0);
+        to_uint8_array(0x0102030405060708, buffer.data(), 10);
+        REQUIRE(memcmp(buffer.data(), "\x00\x00\x01\x02\x03\x04\x05\x06\x07\x08\xFF\xFF", 12) == 0);
     }
 
-    SECTION("Sixteen bytes")
+    SECTION("Length is eight bytes larger")
     {
-        to_uint8_array<16>(0x0102030405060708, buffer.data());
+        to_uint8_array(0x0102030405060708, buffer.data(), 16);
         REQUIRE(memcmp(buffer.data(), "\x00\x00\x00\x00\x00\x00\x00\x00\x01\x02\x03\x04\x05\x06\x07\x08", 16) == 0);
+    }
+
+    SECTION("Length is one byte shorter")
+    {
+        to_uint8_array(0x0102030405060708, buffer.data(), 7);
+        REQUIRE(memcmp(buffer.data(), "\x01\x02\x03\x04\x05\x06\x07\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF", 16) == 0);
+    }
+
+    SECTION("Length is three bytes shorter")
+    {
+        to_uint8_array(0x0102030405060708, buffer.data(), 5);
+        REQUIRE(memcmp(buffer.data(), "\x01\x02\x03\x04\x05\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF", 16) == 0);
     }
 }
 
