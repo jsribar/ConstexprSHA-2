@@ -269,34 +269,6 @@ private:
     };
 };
 
-// Initial hash values for SHA-256.
-struct initial_hash_values_256_t
-{
-    static constexpr std::array<uint32_t, 8> values{
-        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
-    };
-};
-
-// SHA-256 implementation.
-class sha256_t : public sha_base_t<uint32_t, initial_hash_values_256_t, round_constants_2x_t, 256, 32>
-{
-public:
-    constexpr sha256_t(std::initializer_list<char> input)
-        : sha_base_t(input.begin(), input.size())
-    {
-    }
-
-    constexpr explicit sha256_t(std::string_view input)
-        : sha_base_t(input.data(), input.size())
-    {
-    }
-
-    constexpr explicit sha256_t(const char* input, size_t length)
-        : sha_base_t(input, length)
-    {
-    }
-};
-
 // Initial hash values for SHA-224.
 struct initital_hash_values_224_t
 {
@@ -320,6 +292,34 @@ public:
     }
 
     constexpr explicit sha224_t(const char* input, size_t length)
+        : sha_base_t(input, length)
+    {
+    }
+};
+
+// Initial hash values for SHA-256.
+struct initial_hash_values_256_t
+{
+    static constexpr std::array<uint32_t, 8> values{
+        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+    };
+};
+
+// SHA-256 implementation.
+class sha256_t : public sha_base_t<uint32_t, initial_hash_values_256_t, round_constants_2x_t, 256, 32>
+{
+public:
+    constexpr sha256_t(std::initializer_list<char> input)
+        : sha_base_t(input.begin(), input.size())
+    {
+    }
+
+    constexpr explicit sha256_t(std::string_view input)
+        : sha_base_t(input.data(), input.size())
+    {
+    }
+
+    constexpr explicit sha256_t(const char* input, size_t length)
         : sha_base_t(input, length)
     {
     }
@@ -360,35 +360,6 @@ private:
     };
 };
 
-// Initial hash values for SHA-512.
-struct initial_hash_values_512_t
-{
-    static constexpr std::array<uint64_t, 8> values{
-        0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
-        0x510e527fade682d1, 0x9b05688c2b3e6c1f, 0x1f83d9abfb41bd6b, 0x5be0cd19137e2179
-    };
-};
-
-// SHA-512 implementation.
-class sha512_t : public sha_base_t<uint64_t, initial_hash_values_512_t, round_constants_5x_t, 640, 64>
-{
-public:
-    constexpr sha512_t(std::initializer_list<char> input)
-        : sha_base_t(input.begin(), input.size())
-    {
-    }
-
-    constexpr explicit sha512_t(std::string_view input)
-        : sha_base_t(input.data(), input.size())
-    {
-    }
-
-    constexpr explicit sha512_t(const char* input, size_t length)
-        : sha_base_t(input, length)
-    {
-    }
-};
-
 // Initial hash values for SHA-384.
 struct initial_hash_values_384_t
 {
@@ -413,6 +384,35 @@ public:
     }
 
     constexpr explicit sha384_t(const char* input, size_t length)
+        : sha_base_t(input, length)
+    {
+    }
+};
+
+// Initial hash values for SHA-512.
+struct initial_hash_values_512_t
+{
+    static constexpr std::array<uint64_t, 8> values{
+        0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
+        0x510e527fade682d1, 0x9b05688c2b3e6c1f, 0x1f83d9abfb41bd6b, 0x5be0cd19137e2179
+    };
+};
+
+// SHA-512 implementation.
+class sha512_t : public sha_base_t<uint64_t, initial_hash_values_512_t, round_constants_5x_t, 640, 64>
+{
+public:
+    constexpr sha512_t(std::initializer_list<char> input)
+        : sha_base_t(input.begin(), input.size())
+    {
+    }
+
+    constexpr explicit sha512_t(std::string_view input)
+        : sha_base_t(input.data(), input.size())
+    {
+    }
+
+    constexpr explicit sha512_t(const char* input, size_t length)
         : sha_base_t(input, length)
     {
     }

@@ -85,7 +85,7 @@
     <ClCompile Include="test_util.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\sha256.hpp" />
+    <ClInclude Include="..\include\sha2.hpp" />
     <ClInclude Include="..\include\util.hpp" />
     <ClInclude Include="hex_to_binary.hpp" />
   </ItemGroup>

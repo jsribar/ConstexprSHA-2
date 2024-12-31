@@ -2,7 +2,7 @@
 
 #include <catch2/catch.hpp>
 
-#include <sha256.hpp>
+#include <sha2.hpp>
 
 #include "hex_to_binary.hpp"
 

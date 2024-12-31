@@ -41,10 +41,10 @@
     <ClInclude Include="hex_to_binary.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\sha256.hpp">
+    <ClInclude Include="..\include\util.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\util.hpp">
+    <ClInclude Include="..\include\sha2.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
