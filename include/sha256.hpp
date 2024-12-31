@@ -11,6 +11,7 @@
 namespace jsribar::cryptography::sha2
 {
 
+// Sum implementations for SHA-224/SHA-256 and SHA-384/SHA-512, respectively.
 constexpr uint32_t sum0(uint32_t w)
 {
     return right_rotate(w, 7) ^ right_rotate(w, 18) ^ (w >> 3);
@@ -31,7 +32,7 @@ constexpr uint64_t sum1(uint64_t w)
     return right_rotate(w, 19) ^ right_rotate(w, 61) ^ (w >> 6);
 }
 
-
+// Sigma implementations for SHA-224/SHA-256 and SHA-384/SHA-512, respectively.
 constexpr uint32_t sigma0(uint32_t h)
 {
     return right_rotate(h, 2) ^ right_rotate(h, 13) ^ right_rotate(h, 22);
@@ -52,12 +53,12 @@ constexpr uint64_t sigma1(uint64_t h)
     return right_rotate(h, 14) ^ right_rotate(h, 18) ^ right_rotate(h, 41);
 }
 
-
+// Base class for all implementations.
 template <typename T, typename HashValues, typename RoundConstants, size_t message_schedule_length, size_t digest_size>
-class sha2_base_t
+class sha_base_t
 {
 protected:
-    constexpr explicit sha2_base_t(const char* input, size_t length)
+    constexpr explicit sha_base_t(const char* input, size_t length)
         : message_begin_m(input)
         , message_end_m(input + length)
         , message_length_m(length)
@@ -208,7 +209,7 @@ private:
     }
 };
 
-
+// Round constants for SHA-224/SHA-256.
 class round_constants_2x
 {
 public:
@@ -235,6 +236,7 @@ private:
     };
 };
 
+// Initial hash values for SHA-256.
 struct hash_values_256
 {
     static constexpr std::array<uint32_t, 8> values{
@@ -242,26 +244,27 @@ struct hash_values_256
     };
 };
 
-class sha256_t : public sha2_base_t<uint32_t, hash_values_256, round_constants_2x, 256, 32>
+// SHA-256 implementation.
+class sha256_t : public sha_base_t<uint32_t, hash_values_256, round_constants_2x, 256, 32>
 {
 public:
     constexpr sha256_t(std::initializer_list<char> input)
-        : sha2_base_t(input.begin(), input.size())
+        : sha_base_t(input.begin(), input.size())
     {
     }
 
     constexpr explicit sha256_t(std::string_view input)
-        : sha2_base_t(input.data(), input.size())
+        : sha_base_t(input.data(), input.size())
     {
     }
 
     constexpr explicit sha256_t(const char* input, size_t length)
-        : sha2_base_t(input, length)
+        : sha_base_t(input, length)
     {
     }
 };
 
-
+// Initial hash values for SHA-224.
 struct hash_values_224
 {
     static constexpr std::array<uint32_t, 8> values{
@@ -269,26 +272,27 @@ struct hash_values_224
     };
 };
 
-class sha224_t : public sha2_base_t<uint32_t, hash_values_224, round_constants_2x, 256, 28>
+// SHA-224 implementation.
+class sha224_t : public sha_base_t<uint32_t, hash_values_224, round_constants_2x, 256, 28>
 {
 public:
     constexpr sha224_t(std::initializer_list<char> input)
-        : sha2_base_t(input.begin(), input.size())
+        : sha_base_t(input.begin(), input.size())
     {
     }
 
     constexpr explicit sha224_t(std::string_view input)
-        : sha2_base_t(input.data(), input.size())
+        : sha_base_t(input.data(), input.size())
     {
     }
 
     constexpr explicit sha224_t(const char* input, size_t length)
-        : sha2_base_t(input, length)
+        : sha_base_t(input, length)
     {
     }
 };
 
-
+// Round constants for SHA-384/SHA-256.
 class round_constants_5x
 {
 public:
@@ -323,6 +327,7 @@ private:
     };
 };
 
+// Initial hash values for SHA-512.
 struct hash_values_512
 {
     static constexpr std::array<uint64_t, 8> values{
@@ -331,25 +336,27 @@ struct hash_values_512
     };
 };
 
-class sha512_t : public sha2_base_t<uint64_t, hash_values_512, round_constants_5x, 640, 64>
+// SHA-512 implementation.
+class sha512_t : public sha_base_t<uint64_t, hash_values_512, round_constants_5x, 640, 64>
 {
 public:
     constexpr sha512_t(std::initializer_list<char> input)
-        : sha2_base_t(input.begin(), input.size())
+        : sha_base_t(input.begin(), input.size())
     {
     }
 
     constexpr explicit sha512_t(std::string_view input)
-        : sha2_base_t(input.data(), input.size())
+        : sha_base_t(input.data(), input.size())
     {
     }
 
     constexpr explicit sha512_t(const char* input, size_t length)
-        : sha2_base_t(input, length)
+        : sha_base_t(input, length)
     {
     }
 };
 
+// Initial hash values for SHA-384.
 struct hash_values_384
 {
     static constexpr std::array<uint64_t, 8> values{
@@ -358,21 +365,22 @@ struct hash_values_384
     };
 };
 
-class sha384_t : public sha2_base_t<uint64_t, hash_values_384, round_constants_5x, 640, 48>
+// SHA-384 implementation.
+class sha384_t : public sha_base_t<uint64_t, hash_values_384, round_constants_5x, 640, 48>
 {
 public:
     constexpr sha384_t(std::initializer_list<char> input)
-        : sha2_base_t(input.begin(), input.size())
+        : sha_base_t(input.begin(), input.size())
     {
     }
 
     constexpr explicit sha384_t(std::string_view input)
-        : sha2_base_t(input.data(), input.size())
+        : sha_base_t(input.data(), input.size())
     {
     }
 
     constexpr explicit sha384_t(const char* input, size_t length)
-        : sha2_base_t(input, length)
+        : sha_base_t(input, length)
     {
     }
 };
