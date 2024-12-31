@@ -44,9 +44,12 @@ constexpr void to_uint8_array<uint8_t>(uint8_t value, uint8_t* dest)
     *dest = value;
 }
 
+
 template <size_t length, typename T>
 constexpr void to_uint8_array(T value, uint8_t* dest)
 {
+    static_assert(length >= sizeof(T));
+
     for (int i = length - 1; i >= 0; --i)
     {
         const auto n = value % 256;
@@ -55,11 +58,21 @@ constexpr void to_uint8_array(T value, uint8_t* dest)
     }
 }
 
+template <>
+constexpr void to_uint8_array<1, uint8_t>(uint8_t value, uint8_t* dest)
+{
+    *dest = value;
+}
+
+
 template <typename T>
 constexpr T right_rotate(const T input, size_t n)
 {
-    assert(n < sizeof(T) * 8);
-    return (input >> n) | (input << (sizeof(T) * 8 - n));
+    if (n %= sizeof(T) * 8)
+    {
+        return (input >> n) | (input << (sizeof(T) * 8 - n));
+    }
+    return input;
 }
 
 }
