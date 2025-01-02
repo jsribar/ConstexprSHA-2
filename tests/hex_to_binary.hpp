@@ -59,7 +59,7 @@ constexpr std::array<uint8_t, N> hex_to_binary_fun(std::string_view str)
         return 0;
     };
 
-    for (int i = 0; i < 2 * N; i += 2)
+    for (size_t i = 0; i < 2 * N; i += 2)
     {
         const uint8_t hi = hex_to_nibble(str[i]);
         const uint8_t lo = hex_to_nibble(str[i + 1]);

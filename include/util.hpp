@@ -31,7 +31,6 @@
 
 #include <cassert>
 #include <cstdint>
-#include <string_view>
 
 namespace jsribar::cryptography::sha2
 {
