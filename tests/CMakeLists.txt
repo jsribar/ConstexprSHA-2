@@ -1,3 +1,7 @@
+list(APPEND CMAKE_MODULE_PATH "../Catch2/contrib")
+include(CTest)
+include(Catch)
+
 include_directories(
     ../Catch2/single_include
     ../include
@@ -14,5 +18,3 @@ add_executable (unit-tests
 )
 
 catch_discover_tests(unit-tests)
-
-#add_test(NAME unit-tests COMMAND $<TARGET_FILE:unit-tests>)
