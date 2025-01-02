@@ -13,4 +13,4 @@ add_executable (unit-tests
     test_util.cpp
 )
 
-add_test(NAME unit-tests COMMAND $<TARGET_FILE:unit-tests>)
+catch_discover_tests(unit-tests)
