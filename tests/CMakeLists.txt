@@ -1,7 +1,3 @@
-list(APPEND CMAKE_MODULE_PATH "../Catch2/contrib")
-include(CTest)
-include(Catch)
-
 include_directories(
     ../Catch2/single_include
     ../include
